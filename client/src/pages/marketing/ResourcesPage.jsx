@@ -35,16 +35,23 @@ export const ResourcesPage = () => {
 
   const handleDownload = (title) => {
     toast.success(`Resource downloaded: ${title}`);
-    const blob = new Blob([
-      `GTS TECHNOSOFT AI LLP - TECHNICAL RESOURCE DOCUMENT\n` +
-      `Title: ${title}\n` +
-      `Publisher: GTS Technosoft AI LLP (gtstech.ai)\n` +
-      `Copyright 2026. All rights reserved.\n`
-    ], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `${title.replace(/[^a-zA-Z0-9]/g, '_')}.txt`);
+    if (title.includes('KavachIQ NMS')) {
+      link.href = '/datasheets/KavachIQ_NMS_Enterprise_Datasheet_v4.2.pdf';
+      link.setAttribute('download', 'KavachIQ_NMS_Enterprise_Datasheet_v4.2.pdf');
+    } else if (title.includes('Syslog')) {
+      link.href = '/datasheets/KavachIQ_Syslog_Manager_Datasheet_v1.9.pdf';
+      link.setAttribute('download', 'KavachIQ_Syslog_Manager_Datasheet_v1.9.pdf');
+    } else if (title.includes('SIEM') || title.includes('ATT&CK')) {
+      link.href = '/datasheets/KavachIQ_SIEM_Threat_Defense_Datasheet_v3.1.pdf';
+      link.setAttribute('download', 'KavachIQ_SIEM_Threat_Defense_Datasheet_v3.1.pdf');
+    } else if (title.includes('Config') || title.includes('Compliance')) {
+      link.href = '/datasheets/KavachIQ_Config_Manager_Datasheet_v2.1.pdf';
+      link.setAttribute('download', 'KavachIQ_Config_Manager_Datasheet_v2.1.pdf');
+    } else {
+      link.href = '/datasheets/KavachIQ_NMS_Enterprise_Datasheet_v4.2.pdf';
+      link.setAttribute('download', `${title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+    }
     document.body.appendChild(link);
     link.click();
     link.remove();

@@ -216,27 +216,6 @@ export const ProductDetailPage = () => {
   const product = productsData[slug] || productsData['nms'];
   const Icon = product.icon;
 
-  const handleDownloadDatasheet = () => {
-    toast.success(`Datasheet download started: ${product.datasheet}`);
-    const blob = new Blob([
-      `GTS TECHNOSOFT AI LLP - PRODUCT SPECIFICATION SHEET\n` +
-      `Product: ${product.name}\n` +
-      `Category: ${product.category}\n` +
-      `Version: 4.3.0-GA (Production Certified)\n` +
-      `Overview: ${product.overview}\n` +
-      `Architecture: Air-Gapped Ready / Linux & Windows Support\n` +
-      `Licensing: Cryptographically Signed .lic Container\n` +
-      `For inquiries: contact@gtstech.ai | https://gtstech.ai\n`
-    ], { type: 'text/plain;charset=utf-8' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', product.datasheet.replace('.pdf', '.txt'));
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  };
-
   return (
     <div className="bg-white min-h-screen">
       {/* Product Hero Banner */}
@@ -270,13 +249,15 @@ export const ProductDetailPage = () => {
               Request Live Demo / 30-Day Trial
             </Link>
 
-            <button
-              onClick={handleDownloadDatasheet}
-              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold border border-slate-200 shadow-sm"
+            <a
+              href={`/datasheets/${product.datasheet}`}
+              download={product.datasheet}
+              onClick={() => toast.success(`Datasheet download started: ${product.datasheet}`)}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 text-xs sm:text-sm font-semibold border border-slate-200 shadow-sm cursor-pointer transition-all hover:border-slate-300"
             >
               <FileDown className="w-4 h-4 text-gts-purple" />
-              <span>Download Technical Datasheet</span>
-            </button>
+              <span>Download Datasheet</span>
+            </a>
           </div>
         </div>
       </section>
