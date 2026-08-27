@@ -1,0 +1,38 @@
+{
+  "name": "gts-technosoft-ai-platform",
+  "version": "1.0.0",
+  "description": "GTS Technosoft AI Platform & KavachIQ Enterprise Suite",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm run --prefix server dev",
+    "dev:client": "npm run --prefix client dev",
+    "build": "npm run --prefix server build && npm run --prefix client build",
+    "prisma:generate": "npm run --prefix server prisma:generate",
+    "prisma:migrate": "npm run --prefix server prisma:migrate",
+    "prisma:seed": "npm run --prefix server prisma:seed",
+    "start": "npm run --prefix server start",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:build": "docker compose up --build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "keywords": [
+    "kavachiq",
+    "nms",
+    "itsm",
+    "siem",
+    "syslog",
+    "config-manager",
+    "gtstech"
+  ],
+  "author": "GTS TECHNOSOFT AI LLP",
+  "license": "UNLICENSED"
+}

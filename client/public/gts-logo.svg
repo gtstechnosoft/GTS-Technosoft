@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" fill="none">
+  <!-- GTS Stylized Curved Wing Mark -->
+  <g transform="translate(10, 10)">
+    <!-- Top Purple Arc -->
+    <path d="M45 10 C20 12 5 28 0 45 C12 36 28 32 46 32 C58 32 70 35 80 40 C75 22 62 12 45 10 Z" fill="#2B1B81"/>
+    <!-- Middle Orange/Gold Arc -->
+    <path d="M50 38 C28 40 10 52 2 68 C14 58 30 54 52 54 C66 54 82 58 92 65 C88 48 72 40 50 38 Z" fill="#F58220"/>
+    <!-- Bottom Black/Violet Curved Base -->
+    <path d="M52 64 C35 66 18 76 10 92 C20 84 36 80 56 80 C68 80 80 84 88 90 C84 76 70 66 52 64 Z" fill="#1A1829"/>
+    <!-- Lower Tail Arc -->
+    <path d="M48 88 C38 90 28 98 22 108 C30 102 42 99 58 99 C66 99 74 102 80 106 C76 96 64 89 48 88 Z" fill="#0D0B18"/>
+  </g>
+
+  <!-- GTS Bold Typography -->
+  <g fill="#2B1B81" transform="translate(105, 70)">
+    <!-- G -->
+    <path d="M38 0 C18 0 4 -14 4 -34 C4 -54 18 -68 38 -68 C52 -68 62 -60 67 -48 L52 -42 C49 -49 44 -54 37 -54 C25 -54 18 -45 18 -34 C18 -23 25 -14 37 -14 C44 -14 50 -18 53 -24 L36 -24 L36 -36 L68 -36 L68 0 L54 0 L53 -8 C49 -2 43 0 38 0 Z"/>
+    <!-- T -->
+    <path d="M74 -54 L98 -54 L98 0 L84 0 L84 -54 L60 -54 L60 -68 L112 -68 L112 -54 L98 -54 Z"/>
+    <!-- S -->
+    <path d="M120 -5 C128 0 138 2 148 2 C163 2 174 -4 174 -16 C174 -27 164 -31 150 -35 C138 -38 128 -42 128 -50 C128 -59 137 -66 148 -66 C158 -66 166 -62 170 -54 L158 -46 C155 -50 152 -53 147 -53 C141 -53 136 -50 136 -45 C136 -40 142 -37 154 -33 C168 -29 182 -24 182 -11 C182 4 168 14 148 14 C134 14 122 8 114 -1 L120 -5 Z"/>
+  </g>
+
+  <!-- Technosoft Subtext -->
+  <g transform="translate(108, 104)" font-family="'Plus Jakarta Sans', 'Inter', sans-serif" font-weight="800" font-size="22" letter-spacing="1">
+    <text x="0" y="0" fill="#111827">Techno</text>
+    <text x="88" y="0" fill="#F58220">soft</text>
+    <text x="136" y="-3" fill="#2B1B81" font-size="12" font-weight="900">AI</text>
+  </g>
+</svg>

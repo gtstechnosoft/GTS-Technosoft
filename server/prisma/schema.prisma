@@ -1,0 +1,354 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  INTERNAL_ADMIN
+  ORG_ADMIN
+  LICENSE_ADMIN
+  SOFTWARE_ADMIN
+  SUPPORT_USER
+  AUDITOR
+  PROCUREMENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  DEACTIVATED
+}
+
+enum OrgStatus {
+  ACTIVE
+  PROVISIONING
+  SUSPENDED
+  DELINQUENT
+  DECOMMISSIONED
+}
+
+enum LicenseType {
+  TRIAL
+  SUBSCRIPTION
+  PERPETUAL
+  NFR
+  PARTNER
+  INTERNAL
+}
+
+enum LicenseStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  SUSPENDED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+enum InstallationStatus {
+  ACTIVE
+  OFFLINE
+  DECOMMISSIONED
+  PENDING_ACTIVATION
+}
+
+enum CaseSeverity {
+  P1_CRITICAL
+  P2_HIGH
+  P3_MEDIUM
+  P4_LOW
+}
+
+enum CaseStatus {
+  NEW
+  IN_PROGRESS
+  WAITING_ON_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TrialStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  EXPIRED
+  CONVERTED
+  REJECTED
+}
+
+model Organization {
+  id              String         @id @default(uuid())
+  legal_name      String
+  display_name    String
+  billing_country String         @default("India")
+  status          OrgStatus      @default(ACTIVE)
+  domain          String?
+  tier            String         @default("Enterprise")
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  // Relationships
+  users           User[]
+  subscriptions   Subscription[]
+  installations   Installation[]
+  support_cases   SupportCase[]
+  audit_events    AuditEvent[]
+  trials          Trial[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String      @id @default(uuid())
+  org_id        String
+  email         String      @unique
+  password_hash String
+  first_name    String?
+  last_name     String?
+  role          UserRole    @default(ORG_ADMIN)
+  mfa_secret    String?
+  mfa_enabled   Boolean     @default(false)
+  status        UserStatus  @default(ACTIVE)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  organization  Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  support_cases SupportCase[] @relation("UserCasesCreated")
+  audit_events  AuditEvent[]  @relation("UserAuditEvents")
+  trials        Trial[]
+
+  @@map("users")
+}
+
+model Product {
+  id              String         @id @default(uuid())
+  code            String         @unique // nms, itsm, siem, syslog-manager, config-manager
+  name            String
+  category        String         // Network & SecOps, IT Service Management, SIEM & Threat
+  tagline         String?
+  description     String?
+  lifecycle_state String         @default("GA") // GA, Preview, Deprecated
+  icon            String?
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  editions        Edition[]
+  subscriptions   Subscription[]
+  installations   Installation[]
+  releases        Release[]
+  trials          Trial[]
+
+  @@map("products")
+}
+
+model Edition {
+  id              String        @id @default(uuid())
+  product_id      String
+  code            String        // standard, professional, enterprise, ultimate
+  name            String
+  feature_profile Json          // JSON list of enabled modules/features
+  release_channel String        @default("stable") // stable, beta, lts
+  created_at      DateTime      @default(now())
+  updated_at      DateTime      @updatedAt
+
+  product         Product       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  entitlements    Entitlement[]
+  releases        Release[]
+  trials          Trial[]
+
+  @@unique([product_id, code])
+  @@map("editions")
+}
+
+model Subscription {
+  id           String             @id @default(uuid())
+  org_id       String
+  product_id   String
+  start_date   DateTime
+  end_date     DateTime
+  support_plan String             @default("24x7 Enterprise Platinum")
+  status       SubscriptionStatus @default(ACTIVE)
+  auto_renew   Boolean            @default(true)
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+
+  organization Organization  @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  product      Product       @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  entitlements Entitlement[]
+
+  @@map("subscriptions")
+}
+
+model Entitlement {
+  id               String       @id @default(uuid())
+  subscription_id  String
+  edition_id       String
+  metric_type      String       @default("NODES") // NODES, DEVICES, EPS (Events/sec), AGENTS, USERS
+  metric_limit     Int          @default(500)
+  activation_limit Int          @default(5)
+  features         Json?        // Override feature toggles
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  subscription     Subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade)
+  edition          Edition      @relation(fields: [edition_id], references: [id], onDelete: Cascade)
+  licenses         License[]
+
+  @@map("entitlements")
+}
+
+model License {
+  id             String        @id @default(uuid())
+  entitlement_id String
+  license_type   LicenseType   @default(SUBSCRIPTION)
+  license_key    String        @unique
+  issue_date     DateTime      @default(now())
+  expiry_date    DateTime
+  signing_key_id String        @default("KAVACHIQ-KMS-ROOT-V1")
+  status         LicenseStatus @default(ACTIVE)
+  signed_payload String        @db.Text
+  signature      String?       @db.Text
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  entitlement    Entitlement    @relation(fields: [entitlement_id], references: [id], onDelete: Cascade)
+  installations  Installation[]
+  trial          Trial?
+
+  @@map("licenses")
+}
+
+model Installation {
+  id                String             @id @default(uuid())
+  org_id            String
+  license_id        String
+  product_id        String
+  version           String
+  alias             String
+  os                String
+  ip_address        String?
+  activation_status InstallationStatus @default(ACTIVE)
+  last_contact      DateTime           @default(now())
+  system_fingerprint String?
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+
+  organization      Organization       @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  license           License            @relation(fields: [license_id], references: [id], onDelete: Cascade)
+  product           Product            @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("installations")
+}
+
+model Release {
+  id              String   @id @default(uuid())
+  product_id      String
+  edition_id      String?
+  version         String   // e.g. 4.2.1-lts
+  package_type    String   // tar.gz, deb, rpm, msi, docker
+  platform        String   // linux-x86_64, windows-x64, container
+  checksum        String   // SHA-256 hash
+  signature       String?  // GPG or CMS signature
+  storage_path    String
+  file_size_bytes BigInt   @default(268435456)
+  release_channel String   @default("stable") // stable, lts, beta
+  release_notes   String?  @db.Text
+  download_count  Int      @default(0)
+  published_at    DateTime @default(now())
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  product         Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  edition         Edition? @relation(fields: [edition_id], references: [id], onDelete: SetNull)
+
+  @@map("releases")
+}
+
+model SupportCase {
+  id          String       @id @default(uuid())
+  org_id      String
+  subject     String
+  description String       @db.Text
+  severity    CaseSeverity @default(P3_MEDIUM)
+  status      CaseStatus   @default(NEW)
+  created_by  String
+  assigned_to String?
+  sla_target_hours Int     @default(8)
+  resolution_notes String? @db.Text
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  organization Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  creator      User         @relation("UserCasesCreated", fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@map("support_cases")
+}
+
+model Trial {
+  id             String      @id @default(uuid())
+  org_id         String
+  user_id        String
+  product_id     String
+  edition_id     String
+  status         TrialStatus @default(PENDING_APPROVAL)
+  start_date     DateTime?
+  expiry_date    DateTime?
+  node_limit     Int         @default(100)
+  license_id     String?     @unique
+  notes          String?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  organization   Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  product        Product      @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  edition        Edition      @relation(fields: [edition_id], references: [id], onDelete: Cascade)
+  license        License?     @relation(fields: [license_id], references: [id], onDelete: SetNull)
+
+  @@map("trials")
+}
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  actor_id   String?
+  org_id     String?
+  action     String   // e.g. "AUTH_LOGIN", "LICENSE_ISSUED", "PACKAGE_DOWNLOADED", "TRIAL_APPROVED"
+  target     String?  // e.g. "License:LIC-8942-NMS"
+  metadata   Json?    // Context payload
+  ip_address String?
+  user_agent String?
+  created_at DateTime @default(now())
+
+  organization Organization? @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  actor        User?         @relation("UserAuditEvents", fields: [actor_id], references: [id], onDelete: SetNull)
+
+  @@map("audit_events")
+}
+
+model Lead {
+  id               String   @id @default(uuid())
+  full_name        String
+  email            String
+  company          String
+  phone            String?
+  job_title        String?
+  product_interest String   // "KavachIQ NMS", "KavachIQ SIEM", "Full KavachIQ Suite", etc.
+  fleet_size       String?  // "50-250 nodes", "250-1000 nodes", "1000+ nodes"
+  message          String?  @db.Text
+  request_type     String   @default("DEMO") // DEMO, TRIAL, PARTNER_INQUIRY, PRICING
+  status           String   @default("NEW")  // NEW, CONTACTED, QUALIFIED, CONVERTED
+  ip_address       String?
+  created_at       DateTime @default(now())
+
+  @@map("leads")
+}
